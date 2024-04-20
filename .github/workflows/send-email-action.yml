@@ -38,6 +38,7 @@ jobs:
       - name: Send trigger email
         uses: dawidd6/action-send-mail@v3
         with:
+          from: "sameer.sam.more@gmail.com"
           to: "zutshi.k@northeastern.edu"
           subject: "Curated Job Links"
           body: |

@@ -19,19 +19,16 @@ jobs:
         run: |
           job_links=""
 
-          # Loop through job boards and fetch recent job links
           for board in ${JOB_BOARDS//,/ }; do
-            # Fetch job links and ensure successful execution
-            recent_jobs=$(curl -s "https://$board/search?query=software+engineer+OR+new+grad" | grep -oE 'href=[\"'](.+)[\"']' | sed 's/href=//g' | sort -n | tail -${MAX_LINKS})
+            recent_jobs=$(curl -s "https://$board/search?query=software+engineer+OR+new+grad" | grep -oE 'href=[\"].+[\".]' | sed 's/href=[\""]//' | sort -n | tail -${MAX_LINKS})
 
-            if [ $? -ne 0 ]; then  # Check if curl command failed
+            if [ $? -ne 0 ]; then
               echo "::warning::Failed to fetch job links from board: $board"
-            elif [ -z "$recent_jobs" ]; then  # Check if recent_jobs is empty
+            elif [ -z "$recent_jobs" ]; then
               echo "::notice::No recent job links found on board: $board"
             else
-              # Append each job link to the job_links variable
               for job in $recent_jobs; do
-                job_links+="$job\n"
+                job_links+="${job}\n"
               done
             fi
           done

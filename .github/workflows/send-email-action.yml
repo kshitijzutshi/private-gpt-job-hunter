@@ -1,12 +1,12 @@
 name: Curated Job Links Workflow
 
 on:
-  workflow_dispatch: {}  # Enables manual trigger
+  workflow_dispatch: {}  # Allows manual trigger
   schedule:
     - cron: "0 9 * * *"  # Run every morning at 9 AM UTC
 
 jobs:
-  send-curated-job-links:
+  curate-and-notify:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -19,8 +19,8 @@ jobs:
         run: |
           job_links=""
 
-          for board in ${JOB_BOARDS//,/ }; do
-            recent_jobs=$(curl -s "https://$board/search?query=software+engineer+OR+new+grad" | grep -oE 'href=[\"].+[\".]' | sed 's/href=[\""]//' | sort -n | tail -${MAX_LINKS})
+          for board in ${JOB_BOARDS//,/}; do
+            recent_jobs=$(curl -s "https://$board/search?query=software+engineer+OR+new+grad" | grep -oE 'href=[\"'](.+)[\"']' | sed 's/href=//g' | sort -n | tail -${MAX_LINKS})
 
             if [ $? -ne 0 ]; then
               echo "::warning::Failed to fetch job links from board: $board"
@@ -33,20 +33,20 @@ jobs:
             fi
           done
 
-          echo "job_links=${job_links}" >> $GITHUB_ENV
+          # Write the job links to a text file
+          echo -e "${job_links}" > daily-job-links.txt
 
-      - name: Send trigger email
-        uses: dawidd6/action-send-mail@v3
+      - name: Commit and push the text file
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add daily-job-links.txt
+          git commit -m "Update daily job links"
+          git push
+
+      - name: Create GitHub issue for notification
+        uses: peter-evans/create-issue-from-file@v3
         with:
-          from: "sameer.sam.more@gmail.com"
-          to: "zutshi.k@northeastern.edu"
-          subject: "Curated Job Links"
-          body: |
-            Hi!
-
-            Here are the curated job links for you:
-
-            ${{ env.job_links }}
-
-            Best regards,
-            Your Workflow
+          title: "Curated Job Links for $(date '+%Y-%m-%d')"
+          content-filepath: daily-job-links.txt
+          labels: "curated-job-links"

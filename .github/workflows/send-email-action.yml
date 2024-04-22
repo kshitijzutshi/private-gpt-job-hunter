@@ -35,7 +35,7 @@ jobs:
 
           # Write the job links to a text file
           echo -e "${job_links}" > daily-job-links.txt
-
+        shell: bash
       - name: Commit and push the text file
         run: |
           git config --global user.name "GitHub Actions"

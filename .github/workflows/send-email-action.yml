@@ -19,7 +19,8 @@ jobs:
         run: |
           job_links=""
 
-          for board in ${JOB_BOARDS//,/}; do
+          IFS=',' read -r -a job_boards <<< "$JOB_BOARDS"
+          for board in "${job_boards[@]}"; do
             recent_jobs=$(curl -s "https://$board/search?query=software+engineer+OR+new+grad" | grep -oE 'href=[\"'](.+)[\"']' | sed 's/href=//g' | sort -n | tail -${MAX_LINKS})
 
             if [ $? -ne 0 ]; then
